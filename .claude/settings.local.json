@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npx tsc *)",
       "WebFetch(domain:claude.ai)",
-      "Bash(npx expo *)"
+      "Bash(npx expo *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\OneDrive\\\\Desktop\\\\khmer-ai-facebook-fixer\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep -E \"\\\\.js$|\\\\.cjs$\")"
     ]
   }
 }

@@ -10,10 +10,14 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "latest",
+    "ollama": "^0.6.3",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
-  },
-  "devDependencies": {}
+    "vite": "latest"
+  }
 }

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -21,6 +22,8 @@ export default defineConfig([
   },
 ])
 =======
+=======
+>>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
@@ -31,4 +34,7 @@ module.exports = defineConfig([
     ignores: ['dist/*'],
   },
 ]);
+<<<<<<< HEAD
+>>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca
+=======
 >>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca

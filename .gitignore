@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -24,6 +25,8 @@ dist-ssr
 *.sln
 *.sw?
 =======
+=======
+>>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca
 .env
 database-backup.json
 database.json
@@ -34,4 +37,7 @@ cloudflared.exe
 android/
 ios/
 expo-env.d.ts
+<<<<<<< HEAD
+>>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca
+=======
 >>>>>>> 4e2398726674817a4dd63f1b016df62d1381baca

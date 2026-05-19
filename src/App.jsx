@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import AIChatAssistant from "./AIChatAssistant";
 
 // ─── Access Codes → Credit Amounts ────────────────────────────
 // Add a new line here each time a customer pays.
@@ -1085,6 +1086,8 @@ export default function App() {
           )}
         </div>
       )}
+
+      <AIChatAssistant />
     </div>
   );
 }
