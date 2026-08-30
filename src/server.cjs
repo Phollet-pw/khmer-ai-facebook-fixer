@@ -19,6 +19,9 @@ function savePayment(record) {
 
 const SECRET = 'your-secret-key-here'; // คีย์ล็อกรหัส Token
 
+// * เพิ่มบรรทัดนี้เข้ามาครับ *
+const app = express();
+
 app.use(cors());
 app.use(express.json());
 const KHMER_AI_SYSTEM_PROMPT = `
@@ -240,10 +243,6 @@ app.post('/api/verify-code', (req, res) => {
 });
 
 const aiChatRouter = require("./aiChat.cjs");
-
-const app = express();
-app.use(cors());
-app.use(express.json());
 
 // === 1. API ROUTES (ต้องวางไว้ด้านบนทั้งหมด) ===
 app.use("/api", aiChatRouter);
