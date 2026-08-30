@@ -215,6 +215,31 @@ const handleSubscribe = async (planId) => {
 
         {/* Input Box */}
         <div style={{ padding: '20px', backgroundColor: '#1f2937', display: 'flex', gap: '10px', borderTop: '1px solid #374151' }}>
+          {/* ប៊ូតុង 📷 🌄 🎙 */}
+      <button 
+        type="button" 
+        onClick={() => alert('មុខងារថតរូប (Camera) កំពុងរៀបចំ...')}
+        style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '0 4px' }}
+        title="ថតរូប"
+      >
+        📷
+      </button>
+      <button 
+        type="button" 
+        onClick={() => alert('មុខងារជ្រើសរូបភាព (Gallery) កំពុងរៀបចំ...')}
+        style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '0 4px' }}
+        title="ជ្រើសរូបភាព"
+      >
+        🌄
+      </button>
+      <button 
+        type="button" 
+        onClick={() => alert('មុខងារថតសំឡេង (Voice) កំពុងរៀបចំ...')}
+        style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '0 4px' }}
+        title="សារសំឡេង"
+      >
+        🎙
+      </button>
           <input
             type="text"
             placeholder="រៀបរាប់ពីបញ្ហា Facebook របស់អ្នកនៅទីនេះ (Profile, Page, Ads, Security...)..."
