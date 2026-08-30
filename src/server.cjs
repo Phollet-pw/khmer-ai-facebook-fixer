@@ -53,14 +53,16 @@ app.use(express.urlencoded({ extended: true }));
 // 3. Stripe Checkout Session Endpoint
 // ==========================================
 app.post('/api/create-checkout-session', async (req, res) => {
-  const { planId } = req.body;
+ const { planId } = req.body;
+  const cleanPlanId = planId ? String(planId).toLowerCase() : '';
+
   const priceMap = {
-    basic: process.env.STRIPE_PRICE_BASIC,       // $6/เดือน
-    standard: process.env.STRIPE_PRICE_STANDARD, // $15/เดือน
-    pro: process.env.STRIPE_PRICE_PRO            // $25/เดือน
+    basic: process.env.STRIPE_PRICE_BASIC,
+    standard: process.env.STRIPE_PRICE_STANDARD,
+    pro: process.env.STRIPE_PRICE_PRO
   };
 
-  const selectedPriceId = priceMap[planId];
+  const selectedPriceId = priceMap[cleanPlanId];
   if (!selectedPriceId) {
     return res.status(400).json({ error: 'Invalid plan selected' });
   }
@@ -93,72 +95,7 @@ const KHMER_AI_SYSTEM_PROMPT = `
 `;
 
 function getKeywordFallback(prompt) {
-  const p = (prompt || '').toLowerCase();
-
-  if (p.match(/payment|payout|billing|aba|acleda|qr|bank|វេរលុយ|ទូទាត់|ប្រាក់|โอน|จ่าย|ธนาคาร/)) {
-    return `បាទ! ខ្ញុំជួយពន្យល់ការទូទាត់ (ព័ត៌មានអូតូ) 💳\n\n` +
-      `១. វេរប្រាក់ ABA / ACLEDA ឲ្យចំចំនួន (ត្រូវតែមានក្បៀស ដូចជា $9.00)\n` +
-      `២. ប្រព័ន្ធស្កេន QR Code ឬ Transfer Slip ដោយស្វ័យប្រវត្ត\n`+
-      `៣. ក្រេឌីតចូលក្នុងរយៈពេល ៥ វិនាទី ក្រោយការទូទាត់\n` +
-      `៤. ប្រសិនបើក្រេឌីតមិនទាន់ចូល សូម Inbox Facebook "Khmer AI" ផ្ទេរ Slip\n\n` +
-      `📱 Khmer AI: https://www.facebook.com/profile.php?id=61567580101437`;
-  }
-
-  if (p.match(/monetization|ប្រាក់ចំណូល|earn|revenue|partner|creator|monetis|รายได้|สร้างรายได้/)) {
-    return `បាទ! ខ្ញុំជួយបញ្ហា Monetization 💰\n\n` +
-      `១. ចូល Page → More → Page Quality → ពិនិត្យ violations\n` +
-      `២. ដក content ដែលបំពានចេញភ្លាមៗ\n` +
-      `៣. ចូល Creator Studio → Monetization → Request Review\n` +
-      `៤. រង់ចាំ ១-២ សប្តាហ៍ ហើយ Meta នឹងឆ្លើយ\n` +
-      `៥. ប្រើ Khmer AI វិភាគស្ថានភាព Monetization របស់ Page (ទិញ Credit ១ ដង)\n\n` +
-      `💡 Tip: ផ្ទុកចំណូល reel/video ច្រើន ចំនួន watch time ត្រូវ 600,000+ minutes;`;
-  }
-
-  if (p.match(/page restrict|restricted|page quality|ban|disable|blocked|ហ្វេសប៊ុក|ផេក|page|ถูกจำกัด|โดนแบน/)) {
-    return `បាទ! ខ្ញុំជួយបញ្ហា Page Restricted 🔒\n\n` +
-      `១. ចូល facebook.com/help/contact → ជ្រើស "Page Restricted"\n` +
-      `២. Upload ID Card (ប័ណ្ណអត្តសញ្ញាណ) ប្រសិនបើ Meta ស្នើ\n` +
-      `៣. ពន្យល់ច្បាស់ថា Page របស់បងផ្ញើ content អ្វី\n`+
-      `៤. រង់ចាំ ២-៥ ថ្ងៃ ហើយ Meta review\n` +
-      `៥. ប្រើ Khmer AI Generate Appeal Letter ដែលជួយ ៩០% 🎯\n\n` +
-      `⚠️ ហៅ Meta Support: 1-650-543-4800 (ប្រសិនបើ severe)`;
-  }
-
-  if (p.match(/ad account|ads|advertising|campaign|ad reject|boost|business manager|โฆษณา|บัญชีโฆษณา/)) {
-    return `បាទ! ខ្ញុំជួយបញ្ហា Ad Account 📛\n\n` +
-      `១. ចូល business.facebook.com → Account Quality\n` +
-      `២. ចុច "Request Review" លើ Ad Account ដែលត្រូវបាន Restrict\n` +
-      `៣. ធ្វើ Payment Method ឲ្យ Valid (ប្រើ Visa/Mastercard)\n` +
-      `៤. ពិនិត្យ Ad Policy ហើយ resubmit ad ដោយ fix content\n` +
-      `៥. ប្រើ Khmer AI ដើម្បីវិភាគហេតុ ad rejected 🤖\n\n` +
-      `📋 Facebook Ads Policy: https://www.facebook.com/business/help/2032702440326605`;
-  }
-
-  if (p.match(/access code|credit|code|client|ក្រេឌីត|kcredit|รหัส|เครดิต/)) {
-    return `បាទ! ខ្ញុំជួយពន្យល់ Access Code & Credit ✨\n\n` +
-      `📦 កញ្ចប់តម្លៃ:\n` +
-      `• Basic $9 → 1 Credit (វិភាគ 1 ដង)\n` +
-      `• Standard $15 → 2 Credits\n` +
-      `• Pro $21 → 3 Credits ⭐️\n` +
-      `• VIP $29 → 5 Credits\n` +
-      `• Business $39 → 8 Credits\n` +
-      `• Agency $59 → 15 Credits\n\n` +
-      `🔑 របៀបប្រើ Access Code:\n` +
-      `១. ទូទាត់ → ទទួល Code (ដូចជា CLIENT-001)\n` +
-      `២. វាយ Code នៅទំព័រ Access Code\n` +
-      `៣. ចុច Submit → Credit ចូលភ្លាម\n` +
-      `៤.
-      ប្រើ Credit វិភាគ Facebook Page/Profile`;
-  }
-
-  return `សួស្តីបង! 🤖 ខ្ញុំ AI ជំនួយការ Khmer AI。\n\n` +
-    `ខ្ញុំអាចជួយបង:\n` +
-    `• 💰 បញ្ហា Monetization\n` +
-    `• 🔒 Page Restricted / Banned\n` +
-    `• 📛 Ad Account ត្រូវបានកំណត់\n` +
-    `• 💳 Payment & Credit\n` +
-    `• 🔑 Access Code & Pricing\n\n` +
-    `សូមសួរពីបញ្ហាជាក់លាក់ ខ្ញុំ នឹងជួយបង! 😊`;
+  return null;
 }
 
 app.post('/api/ai/chat', async (req, res) => {
