@@ -21,7 +21,31 @@ const KHMER_AI_MERCHANT_PROMPT = `
 router.post('/chat', async (req, res) => {
   try {
     const { prompt } = req.body;
+    const p = (prompt || '').toLowerCase();
+if (p.match(/payment|payout|billing|aba|acleda|qr|bank|price|package|តម្លៃ|បង់ប្រាក់|ទូទាត់|បង់លុយ|ចង់បង់|របៀបបង់|បង់តាមណា|ស្កេន|QR|ABA|ACLEDA|ធនាគារ|កញ្ចប់|សេវាកម្ម|ថ្លៃប៉ុន្មាន|តម្លៃប៉ុន្មាន/)) {
+  return res.json({
+    success: true,
+    reply: `បានបង 🙏
 
+សម្រាប់ការបង់សេវា Khmer AI សូមចុច Link ឬស្កេន QR ខាងក្រោម៖
+
+🏦 ABA / ACLEDA QR
+🔗 https://link.payway.com.kh/de4467234
+💰 តម្លៃ Package:
+• Basic $9
+• Standard $15
+• Pro $21
+• VIP $29
+
+ក្រោយបង់រួច សូមផ្ញើមកវិញ៖
+1. Slip បង់ប្រាក់
+2. Link Facebook Page
+3. Package ដែលបងចង់ប្រើ
+
+ក្រុមការងារ Khmer AI នឹងពិនិត្យ និងផ្ញើ Access Code ឲ្យភ្លាមៗ ✅
+សូមអរគុណបង 🙏`
+});
+  }
     if (!prompt) {
       return res.status(400).json({ success: false, message: "សូមបញ្ចូលសំណួរ" });
     }

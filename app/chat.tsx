@@ -2,23 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    FlatList,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { ThemedText } from '../components/themed-text';
 
 // ─────────────────────────────────────────────
 // THEME
@@ -96,29 +97,50 @@ const getTime = () =>
 
 const genId = () => Math.random().toString(36).slice(2, 9);
 
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+};
+
 // ─────────────────────────────────────────────
 // TYPING DOTS
 // ─────────────────────────────────────────────
 function TypingDots() {
-  const anims = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+  const anims = [
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+  ];
 
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.stagger(200, anims.map(a =>
-        Animated.sequence([
-          Animated.timing(a, { toValue: -6, duration: 300, useNativeDriver: true }),
-          Animated.timing(a, { toValue: 0,  duration: 300, useNativeDriver: true }),
-        ])
-      ))
+      Animated.stagger(
+        200,
+        anims.map(a =>
+          Animated.sequence([
+            Animated.timing(a, { toValue: -6, duration: 300, useNativeDriver: true }),
+            Animated.timing(a, { toValue: 0, duration: 300, useNativeDriver: true }),
+          ])
+        )
+      )
     );
     loop.start();
     return () => loop.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <View style={styles.typingRow}>
       <View style={[styles.avatar, styles.avatarAI]}>
-        <Text style={{ fontSize: 13 }}>✦</Text>
+        <Text style={styles.iconSmall}>✦</Text>
       </View>
       <View style={styles.typingBubble}>
         {anims.map((a, i) => (
@@ -138,7 +160,7 @@ function MessageBubble({ msg }: { msg: Message }) {
     <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
       {!isUser && (
         <View style={[styles.avatar, styles.avatarAI]}>
-          <Text style={{ fontSize: 13 }}>✦</Text>
+          <Text style={styles.iconSmall}>✦</Text>
         </View>
       )}
       <View style={{ maxWidth: '75%' }}>
@@ -150,9 +172,11 @@ function MessageBubble({ msg }: { msg: Message }) {
           </View>
         )}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAI]}>
-          <Text style={[styles.bubbleText, isUser && { color: '#fff' }]}>{msg.text}</Text>
+          <Text style={isUser ? [styles.bubbleText, { color: '#fff' } as const] : styles.bubbleText}>
+            {msg.text}
+          </Text>
         </View>
-        <Text style={[styles.bubbleTime, isUser && { textAlign: 'right' }]}>{msg.time}</Text>
+        <Text style={[styles.bubbleTime, isUser && ({ textAlign: 'right' } as const)]}>{msg.time}</Text>
       </View>
       {isUser && (
         <View style={[styles.avatar, styles.avatarUser]}>
@@ -170,7 +194,7 @@ function WelcomeScreen({ onPickMode }: { onPickMode: (m: ModeKey) => void }) {
   return (
     <View style={styles.welcome}>
       <View style={styles.welcomeIcon}>
-        <Text style={{ fontSize: 28 }}>✦</Text>
+        <ThemedText style={{ fontSize: 28 }}>✦</ThemedText>
       </View>
       <Text style={styles.welcomeTitle}>Khmer AI Chat</Text>
       <Text style={styles.welcomeSub}>ជ្រើសរើសប្រភេទជំនួយ ឬវាយសំណួររបស់អ្នក</Text>
@@ -208,66 +232,72 @@ export default function ChatScreen() {
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
 
-// — API CALL —
-const callAI = useCallback(async (userText: string, history: Message[]) => {
-  setLoading(true);
+  // ── API CALL ──
+  const callAI = useCallback(
+    async (userText: string, _history: Message[]) => {
+      setLoading(true);
 
-  try {
-    const res = await fetch('https://khmerai.store/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        senderId: 'app-user',
-        message: userText,
-      }),
-    });
+      try {
+        const res = await fetch('https://khmerai.store/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: 'app-user',
+            message: userText,
+          }),
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!res.ok || !data.ok || !data.reply) {
-      throw new Error(data.error || 'AI មិនអាចឆ្លើយបាន');
-    }
+        if (!res.ok || !data.ok || !data.reply) {
+          throw new Error(data.error || 'AI មិនអាចឆ្លើយបាន');
+        }
 
-    const aiMsg: Message = {
-      id: genId(),
-      role: 'assistant',
-      text: data.reply,
-      time: getTime(),
-    };
+        const aiMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          text: data.reply,
+          time: getTime(),
+        };
 
-    setMessages(prev => [...prev, aiMsg]);
-    scrollToEnd();
+        setMessages(prev => [...prev, aiMsg]);
+        scrollToEnd();
 
-    return data.reply;
-  } catch (err) {
-    console.error('callAI error:', err);
+        return data.reply;
+      } catch (err) {
+        console.error('callAI error:', err);
 
-    const errMsg: Message = {
-      id: genId(),
-      role: 'assistant',
-      text: '⚠️ មិនអាចភ្ជាប់ AI បានទេ។ សូមពិនិត្យ connection។',
-      time: getTime(),
-    };
+        const errMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          text: '⚠️ មិនអាចភ្ជាប់ AI បានទេ។ សូមពិនិត្យ connection។',
+          time: getTime(),
+        };
 
-    setMessages(prev => [...prev, errMsg]);
-    scrollToEnd();
+        setMessages(prev => [...prev, errMsg]);
+        scrollToEnd();
 
-    return errMsg.text;
-  } finally {
-    setLoading(false);
-  }
-}, [scrollToEnd]); 
-// ── SEND ──
-const send = useCallback(async () => {
-  const text = input.trim();
+        return errMsg.text;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [scrollToEnd]
+  );
+
+  // ── SEND ──
+  const send = useCallback(async () => {
+    const text = input.trim();
     if (!text && !images.length) return;
     if (loading) return;
 
     Keyboard.dismiss();
     const displayText = text || '(រូបភាព)';
     const userMsg: Message = {
-      id: genId(), role: 'user',
-      text: displayText, time: getTime(),
+      id: genId(),
+      role: 'user',
+      text: displayText,
+      time: getTime(),
       images: images.length ? [...images] : undefined,
     };
 
@@ -282,24 +312,27 @@ const send = useCallback(async () => {
     await callAI(displayText, newHistory);
   }, [input, images, loading, messages, started, callAI, scrollToEnd]);
 
-// ── PICK MODE ──
-const pickMode = useCallback(async (m: ModeKey) => {
-   setMode(m);
-   setStarted(true);
-    const userMsg: Message = { id: genId(), role: 'user', text: STARTERS[m], time: getTime() };
-    const newHistory = [userMsg];
-    setMessages(newHistory);
-    scrollToEnd();
-    await callAI(STARTERS[m], newHistory);
-  }, [callAI, scrollToEnd]);
+  // ── PICK MODE ──
+  const pickMode = useCallback(
+    async (m: ModeKey) => {
+      setMode(m);
+      setStarted(true);
+      const userMsg: Message = { id: genId(), role: 'user', text: STARTERS[m], time: getTime() };
+      const newHistory = [userMsg];
+      setMessages(newHistory);
+      scrollToEnd();
+      await callAI(STARTERS[m], newHistory);
+    },
+    [callAI, scrollToEnd]
+  );
 
-// ── SWITCH MODE (in-chat) ──
+  // ── SWITCH MODE (in-chat) ──
   const switchMode = useCallback((m: ModeKey) => {
     setMode(m);
   }, []);
 
-// ── IMAGE PICKER ──
-const pickImage = useCallback(async () => {
+  // ── IMAGE PICKER ──
+  const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -311,112 +344,99 @@ const pickImage = useCallback(async () => {
       setImages(prev => [...prev, ...result.assets.map(a => a.uri)]);
     }
   }, []);
-const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
 
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
+  // ── VOICE ──
+  const toggleVoice = useCallback(async () => {
+    if (isRecording && recording) {
+      try {
+        await recording.stopAndUnloadAsync();
+        setRecording(null);
+        setIsRecording(false);
 
-  return btoa(binary);
-};
+        const uri = recording.getURI();
 
-// — VOICE —
-const toggleVoice = useCallback(async () => {
-  if (isRecording && recording) {
-    try {
-      await recording.stopAndUnloadAsync();
-      setRecording(null);
-      setIsRecording(false);
+        if (!uri) {
+          setInput('⚠️ មិនអាចយក voice file បានទេ');
+          return;
+        }
 
-      const uri = recording.getURI();
+        const userMsg: Message = {
+          id: genId(),
+          role: 'user',
+          text: '🎤 (voice message recorded)',
+          time: getTime(),
+        };
 
-      if (!uri) {
-        setInput('⚠️ មិនអាចយក voice file បានទេ');
-        return;
+        setMessages(prev => [...prev, userMsg]);
+        scrollToEnd();
+
+        const audioRes = await fetch(uri);
+        const audioBuffer = await audioRes.arrayBuffer();
+        const audioBase64 = arrayBufferToBase64(audioBuffer);
+
+        const res = await fetch('https://khmerai.store/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: 'app-voice-user',
+            audioBase64,
+            message: 'សូមស្តាប់សំឡេងនេះ ហើយឆ្លើយតបជាភាសាខ្មែរ',
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || 'voice failed');
+        }
+
+        const aiMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          text: data.reply || data.text || 'សូមអភ័យទោស បង ខ្ញុំមិនទាន់អាចស្តាប់បានទេ 🙏',
+          time: getTime(),
+        };
+
+        setMessages(prev => [...prev, aiMsg]);
+        scrollToEnd();
+      } catch (err) {
+        console.error('voice app error:', err);
+
+        const errMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          text: '⚠️ Voice មានបញ្ហា សូមព្យាយាមម្តងទៀត 🙏',
+          time: getTime(),
+        };
+
+        setMessages(prev => [...prev, errMsg]);
+        scrollToEnd();
       }
 
-      const userMsg: Message = {
-        id: genId(),
-        role: 'user',
-        text: '🎤 (voice message recorded)',
-        time: getTime(),
-      };
-
-      setMessages(prev => [...prev, userMsg]);
-      scrollToEnd();
-
-      const audioRes = await fetch(uri);
-      const audioBuffer = await audioRes.arrayBuffer();
-      const audioBase64 = arrayBufferToBase64(audioBuffer);
-
-      const res = await fetch('https://khmerai.store/voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-         senderId: 'app-voice-user',
-         audioBase64,
-         message: 'ช่วยฟังเสียงนี้ แล้วตอบกลับเป็นภาษาเขมร', 
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'voice failed');
-      }
-
-      const aiMsg: Message = {
-        id: genId(),
-        role: 'assistant',
-        text: data.reply || data.text || 'សូមអភ័យទោស បង ខ្ញុំមិនទាន់អាចស្តាប់បានទេ 🙏',
-        time: getTime(),
-      };
-
-      setMessages(prev => [...prev, aiMsg]);
-      scrollToEnd();
-    } catch (err) {
-      console.error('voice app error:', err);
-
-      const errMsg: Message = {
-        id: genId(),
-        role: 'assistant',
-        text: '⚠️ Voice មានបញ្ហា សូមព្យាយាមម្តងទៀត 🙏',
-        time: getTime(),
-      };
-
-      setMessages(prev => [...prev, errMsg]);
-      scrollToEnd();
+      return;
     }
 
-    return;
-  }
+    try {
+      await Audio.requestPermissionsAsync();
 
-  try {
-    await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
 
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
-    });
+      const { recording: rec } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
 
-    const { recording: rec } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY
-    );
+      setRecording(rec);
+      setIsRecording(true);
+    } catch (err) {
+      console.error('start recording error:', err);
+    }
+  }, [isRecording, recording]);
 
-    setRecording(rec);
-    setIsRecording(true);
-  } catch (err) {
-    console.error('start recording error:', err);
-  }
-}, [isRecording, recording]);
   // ── RENDER ITEM ──
-  const renderItem = useCallback(({ item }: { item: Message }) => (
-    <MessageBubble msg={item} />
-  ), []);
+  const renderItem = useCallback(({ item }: { item: Message }) => <MessageBubble msg={item} />, []);
 
   const keyExtractor = useCallback((item: Message) => item.id, []);
 
@@ -435,11 +455,13 @@ const toggleVoice = useCallback(async () => {
           <Text style={styles.headerName}>Khmer AI Chat</Text>
           <View style={styles.headerStatus}>
             <View style={styles.statusDot} />
-            <Text style={styles.headerStatusText}>អនឡាញ · Claude AI</Text>
+            <Text style={styles.headerStatusText}>អនឡាញ · phollet AI</Text>
           </View>
         </View>
         <View style={styles.modeBadge}>
-          <Text style={styles.modeBadgeText}>{MODES[mode].emoji} {MODES[mode].label}</Text>
+          <Text style={styles.modeBadgeText}>
+            {MODES[mode].emoji} {MODES[mode].label}
+          </Text>
         </View>
       </View>
 
@@ -467,8 +489,10 @@ const toggleVoice = useCallback(async () => {
         {/* MODE BAR (visible after started) */}
         {started && (
           <ScrollView
-            horizontal showsHorizontalScrollIndicator={false}
-            style={styles.modeBar} contentContainerStyle={styles.modeBarContent}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.modeBar}
+            contentContainerStyle={styles.modeBarContent}
           >
             {(Object.keys(MODES) as ModeKey[]).map(k => (
               <TouchableOpacity
@@ -536,10 +560,7 @@ const toggleVoice = useCallback(async () => {
               disabled={loading || (!input.trim() && !images.length)}
               activeOpacity={0.8}
             >
-              {loading
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Ionicons name="send" size={18} color="#fff" />
-              }
+              {loading ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="send" size={18} color="#fff" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -595,6 +616,7 @@ const styles = StyleSheet.create({
   },
   avatarAI: { backgroundColor: '#6366f122', borderWidth: 1, borderColor: '#6366f133' },
   avatarUser: { backgroundColor: 'rgba(99,102,241,0.15)', borderWidth: 1, borderColor: 'rgba(99,102,241,0.25)' },
+  iconSmall: { fontSize: 14 } as any,
   bubble: {
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 18, maxWidth: '100%',
@@ -609,7 +631,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   bubbleText: { fontSize: 14, color: T.textPrimary, lineHeight: 22 },
-  bubbleTime: { fontSize: 10, color: T.textDim, marginTop: 4, fontVariant: ['tabular-nums'] },
+  bubbleTime: { fontSize: 10, color: T.textDim, marginTop: 4 },
   imgRow: { flexDirection: 'row', gap: 4, flexWrap: 'wrap', marginBottom: 4, justifyContent: 'flex-end' },
   msgImage: { width: 90, height: 90, borderRadius: 10 },
 
