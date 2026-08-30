@@ -81,6 +81,30 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+// មុខងារ Subscription និងទូទាត់ប្រាក់
+const handleSubscribe = async (planId) => {
+  try {
+    const response = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({ planId }), // 'basic', 'standard', ឬ 'pro'
+    });
+
+    const data = await response.json();
+    if (data.url) {
+      // នាំអតិថិជនទៅកាន់ទំព័រទូទាត់ប្រាក់ StripeCheckout ដោយស្វ័យប្រវត្តិ
+      window.location.href = data.url;
+    } else {
+      alert('មានបញ្ហាក្នុងការបង្កើតកន្លែងទូទាត់ប្រាក់៖ ' + (data.error || ''));
+    }
+  } catch (err) {
+    console.error('Subscription Failed:', err);
+    alert('មិនអាចភ្ជាប់ទៅកាន់ប្រព័ន្ធទូទាត់ប្រាក់បានទេ!');
+  }
+};
+
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#111827', color: 'white', fontFamily: 'sans-serif' }}>
       {/* Sidebar */}
@@ -111,6 +135,33 @@ const Dashboard = ({ onLogout }) => {
             </div>
           )}
         </div>
+
+        {/* ផ្នែកជ្រើសរើសកញ្ចប់សេវាកម្ម (Pricing Plans) */}
+        <div style={{ backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', marginBottom: '15px' }}>
+          <p style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: 'bold', color: '#f3f4f6' }}>
+            💳 ជាវកញ្ចប់ប្រចាំខែ (Subscription)
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button 
+              onClick={() => handleSubscribe('basic')}
+              style={{ ...navBtn, backgroundColor: '#2563eb', color: 'white', textAlign: 'center' }}
+            >
+              ជាវកញ្ចប់ Basic ($6/ខែ)
+            </button>
+            <button 
+              onClick={() => handleSubscribe('standard')}
+              style={{ ...navBtn, backgroundColor: '#059669', color: 'white', textAlign: 'center' }}
+            >
+             ជាវកញ្ចប់ Standard ($15/ខែ)
+            </button>
+            <button 
+            onClick={() => handleSubscribe('pro')}
+            style={{ ...navBtn, backgroundColor: '#7c3aed', color: 'white', textAlign: 'center' }}
+            >
+              ជាវកញ្ចប់ Pro ($25/ខែ)
+            </button>
+        </div>
+      </div>
 
         {/* ប្រវត្តិការងារ & បញ្ហាទូទៅ */}
         <div style={{ flexGrow: 1, overflowY: 'auto' }}>

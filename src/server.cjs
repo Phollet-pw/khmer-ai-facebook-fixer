@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken'); // สำหรับทำระบบ Login
 const fs = require('fs');
 const path = require('path');
+const app = express();
 
 const paymentsFile = path.join(__dirname, '../payments.json');
 
@@ -17,11 +18,69 @@ function savePayment(record) {
   fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
 }
 
+// ==========================================
+// 1. Stripe Webhook (ត្រូវនៅមុន express.json)
+// ==========================================
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
 
-const app = express();
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userEmail = session.customer_details.email;
+    const planId = session.metadata.planId;
+    console.log(`✅ Payment success for ${userEmail}, Plan: ${planId}`);
+  }
+
+  res.json({ received: true });
+});
+
+// ==========================================
+// 2. Global Middlewares (ត្រូវដាក់ត្រង់នេះ!)
+// ==========================================
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ==========================================
+// 3. Stripe Checkout Session Endpoint
+// ==========================================
+app.post('/api/create-checkout-session', async (req, res) => {
+  const { planId } = req.body;
+  const priceMap = {
+    basic: process.env.STRIPE_PRICE_BASIC,       // $6/เดือน
+    standard: process.env.STRIPE_PRICE_STANDARD, // $15/เดือน
+    pro: process.env.STRIPE_PRICE_PRO            // $25/เดือน
+  };
+
+  const selectedPriceId = priceMap[planId];
+  if (!selectedPriceId) {
+    return res.status(400).json({ error: 'Invalid plan selected' });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      line_items: [{ price: selectedPriceId, quantity: 1 }],
+      metadata: { planId },
+      success_url: `${req.headers.origin}/?payment=success`,
+      cancel_url: `${req.headers.origin}/?payment=cancelled`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe Checkout Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 const KHMER_AI_SYSTEM_PROMPT = `
 អ្នកគឺជាជំនួយការលក់ស្វ័យប្រវត្តរបស់ប្រព័ន្ធ "Khmer AI ជំនួយការជួសជុលហ្វេសប៊ុក"។
@@ -345,6 +404,7 @@ app.get('/*splat', (req, res) => {
 });
 
 // === 3. START SERVER ===
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
