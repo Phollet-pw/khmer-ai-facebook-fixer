@@ -17,7 +17,6 @@ function savePayment(record) {
   fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
 }
 
-const SECRET = 'your-secret-key-here'; // คีย์ล็อกรหัส Token
 
 const app = express();
 
@@ -140,7 +139,7 @@ app.post('/api/ai/chat', async (req, res) => {
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === '1234') {
-        const token = jwt.sign({ username }, SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ username }, process.env.JWT_SECRET || 'mysecretkey', { expiresIn: '7d' });
         return res.json({ success: true, token });
     }
     res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
@@ -245,38 +244,96 @@ app.get("/api-health", (req, res) => {
   res.send("Khmer AI Backend is running");
 });
 
-// Facebook Login API
-app.post('/api/facebook/login', async (req, res) => {
-  const { accessToken } = req.body;
+// ===== Facebook OAuth Login Flow =====
+
+const FB_APP_ID = process.env.FB_APP_ID;
+const FB_APP_SECRET = process.env.FB_APP_SECRET;
+const FB_REDIRECT_URI = 'https://khmer-ai-facebook-fixer-udcm.onrender.com/api/facebook/callback';
+const SECRET = process.env.JWT_SECRET || 'mysecretkey';
+
+// ជំហានទី 1: ចាប់ផ្តើម login — redirect ភ្ញៀវទៅ Facebook
+app.get('/api/facebook/login', (req, res) => {
+  const fbLoginUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
+    `client_id=${FB_APP_ID}` +
+    `&redirect_uri=${encodeURIComponent(FB_REDIRECT_URI)}` +
+    `&scope=public_profile,email,pages_show_list` +
+    `&response_type=code`;
+
+  res.redirect(fbLoginUrl);
+});
+
+// ជំហានទី 2: Facebook redirect ត្រឡប់មកទីនេះជាមួយ authorization code
+app.get('/api/facebook/callback', async (req, res) => {
+  const { code, error } = req.query;
+
+  if (error) {
+    return res.redirect('/?fb_error=login_cancelled');
+  }
+  if (!code) {
+    return res.redirect('/?fb_error=no_code');
+  }
 
   try {
-    const fbResponse = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,email&access_token=${accessToken}`);
-    const fbData = await fbResponse.json();
+    // ជំហានទី 3: ដូរ authorization code ជា access token
+    const tokenRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      `client_id=${FB_APP_ID}` +
+      `&redirect_uri=${encodeURIComponent(FB_REDIRECT_URI)}` +
+      `&client_secret=${FB_APP_SECRET}` +
+      `&code=${code}`
+    );
+    const tokenData = await tokenRes.json();
 
-    if (fbData.error) {
-      return res.status(400).json({ success: false, error: fbData.error.message });
+    if (tokenData.error) {
+      console.error('FB token error:', tokenData.error);
+      return res.redirect('/?fb_error=token_exchange_failed');
     }
 
-    const port = process.env.PORT || 5000;
-    const aiResponse = await fetch(`http://localhost:${port}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: fbData.name,
-        message: `Analyze account issues for email: ${fbData.email}`
-      })
-    });
+    const accessToken = tokenData.access_token;
 
-    const aiData = await aiResponse.json();
+    // ជំហានទី 4: ទាញព័ត៌មានប្រវត្តិរូបភ្ញៀវ
+    const profileRes = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`
+    );
+    const profile = await profileRes.json();
 
-    res.json({
-      success: true,
-      user: fbData,
-      aiAnalysis: aiData.result || aiData.reply
-    });
+    // ជំហានទី 5: ទាញ Pages ដែលភ្ញៀវគ្រប់គ្រង
+    const pagesRes = await fetch(
+      `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
+    );
+    const pagesData = await pagesRes.json();
 
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    // បង្កើត session token (JWT) សម្រាប់ភ្ញៀវ
+    const sessionToken = jwt.sign(
+      {
+        fbId: profile.id,
+        name: profile.name,
+        email: profile.email || null,
+        pages: pagesData.data || []
+      },
+      process.env.JWT_SECRET || 'mysecretkey',
+      { expiresIn: '7d' }
+    );
+
+    res.redirect(`/?fb_login=success&token=${sessionToken}`);
+
+  } catch (err) {
+    console.error('Facebook OAuth error:', err.message);
+    res.redirect('/?fb_error=server_error');
+  }
+});
+
+// ជំហានទី 6: Endpoint ផ្ទៀងផ្ទាត់ token និងទាញព័ត៌មានភ្ញៀវ
+app.get('/api/facebook/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ success: false, message: 'No token' });
+
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'mysecretkey');
+    res.json({ success: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Invalid token' });
   }
 });
 
