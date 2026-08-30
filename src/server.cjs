@@ -239,8 +239,6 @@ app.post('/api/verify-code', (req, res) => {
   });
 });
 
-const express = require("express");
-const cors = require("cors");
 const aiChatRouter = require("./aiChat.cjs");
 
 const app = express();
