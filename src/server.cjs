@@ -16,7 +16,7 @@ function savePayment(record) {
   payments.push(record);
   fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
 }
-const app = express();
+
 const SECRET = 'your-secret-key-here'; // คีย์ล็อกรหัส Token
 
 app.use(cors());
@@ -236,63 +236,71 @@ app.post('/api/verify-code', (req, res) => {
   success: true,
   message: 'Access granted',
   user
-  
+  });
 });
- 
 
+const path = require('path');
 const express = require("express");
 const cors = require("cors");
 const aiChatRouter = require("./aiChat.cjs");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
+// === 1. API ROUTES (ต้องวางไว้ด้านบนทั้งหมด) ===
 app.use("/api", aiChatRouter);
 
-app.get("/", (req, res) => {
-    res.send("Khmer AI Backend is running");
+app.get("/api-health", (req, res) => {
+  res.send("Khmer AI Backend is running");
 });
 
-// === ដាក់កូដ FACEBOOK LOGIN API នៅត្រង់នេះ ===
+// Facebook Login API
 app.post('/api/facebook/login', async (req, res) => {
-    const { accessToken } = req.body;
+  const { accessToken } = req.body;
 
-    try {
-        // 1. ទាញទិន្នន័យពី Facebook Graph API
-        const fbResponse = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,email,accounts{name,access_token}&access_token=${accessToken}`);
-        const fbData = await fbResponse.json();
+  try {
+    // 1. ดึงข้อมูลจาก Facebook Graph API
+    const fbResponse = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,email&access_token=${accessToken}`);
+    const fbData = await fbResponse.json();
 
-        if (fbData.error) {
-            return res.status(400).json({ success: false, error: fbData.error.message });
-        }
-
-        // 2. បញ្ជូនព័ត៌មានទៅវិភាគជាមួយ AI
-        const aiResponse = await fetch('http://localhost:3000/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: fbData.name,
-                message: `Analyze account issues for email: ${fbData.email}`
-            })
-        });
-
-        const aiData = await aiResponse.json();
-
-        res.json({
-            success: true,
-            user: fbData,
-            aiAnalysis: aiData.result || aiData.reply
-        });
-
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+    if (fbData.error) {
+      return res.status(400).json({ success: false, error: fbData.error.message });
     }
+
+    // 2. ส่งข้อมูลไปวิเคราะห์กับ AI (ใช้ Port เดียวกับ Server)
+    const port = process.env.PORT || 5000;
+    const aiResponse = await fetch(`http://localhost:${port}/api/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: fbData.name,
+        message: `Analyze account issues for email: ${fbData.email}`
+      })
+    });
+
+    const aiData = await aiResponse.json();
+
+    res.json({
+      success: true,
+      user: fbData,
+      aiAnalysis: aiData.result || aiData.reply
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
+// === 2. SERVE FRONTEND (ต้องอยู่ใต้ API ทั้งหมด) ===
+app.use(express.static(path.join(__dirname, '../dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
-const PORT = 5000;
+
+// === 3. START SERVER ===
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
