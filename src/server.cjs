@@ -239,10 +239,7 @@ app.post('/api/verify-code', (req, res) => {
   });
 });
 
-const aiChatRouter = require("./aiChat.cjs");
 
-// === 1. API ROUTES ===
-app.use("/api", aiChatRouter);
 
 app.get("/api-health", (req, res) => {
   res.send("Khmer AI Backend is running");
