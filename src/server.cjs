@@ -19,11 +19,11 @@ function savePayment(record) {
 
 const SECRET = 'your-secret-key-here'; // คีย์ล็อกรหัส Token
 
-// * เพิ่มบรรทัดนี้เข้ามาครับ *
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 const KHMER_AI_SYSTEM_PROMPT = `
 អ្នកគឺជាជំនួយការលក់ស្វ័យប្រវត្តរបស់ប្រព័ន្ធ "Khmer AI ជំនួយការជួសជុលហ្វេសប៊ុក"។
 ភារកិច្ចរបស់អ្នក៖
@@ -35,12 +35,12 @@ const KHMER_AI_SYSTEM_PROMPT = `
 `;
 
 function getKeywordFallback(prompt) {
-  const p = `(prompt || '').toLowerCase()`;
+  const p = (prompt || '').toLowerCase();
 
   if (p.match(/payment|payout|billing|aba|acleda|qr|bank|វេរលុយ|ទូទាត់|ប្រាក់|โอน|จ่าย|ธนาคาร/)) {
     return `បាទ! ខ្ញុំជួយពន្យល់ការទូទាត់ (ព័ត៌មានអូតូ) 💳\n\n` +
       `១. វេរប្រាក់ ABA / ACLEDA ឲ្យចំចំនួន (ត្រូវតែមានក្បៀស ដូចជា $9.00)\n` +
-      `២. ប្រព័ន្ធស្កេន QR Code ឬ Transfer Slip ដោយស្វ័យប្រវត្ត\n` +
+      `២. ប្រព័ន្ធស្កេន QR Code ឬ Transfer Slip ដោយស្វ័យប្រវត្ត\n`+
       `៣. ក្រេឌីតចូលក្នុងរយៈពេល ៥ វិនាទី ក្រោយការទូទាត់\n` +
       `៤. ប្រសិនបើក្រេឌីតមិនទាន់ចូល សូម Inbox Facebook "Khmer AI" ផ្ទេរ Slip\n\n` +
       `📱 Khmer AI: https://www.facebook.com/profile.php?id=61567580101437`;
@@ -53,14 +53,14 @@ function getKeywordFallback(prompt) {
       `៣. ចូល Creator Studio → Monetization → Request Review\n` +
       `៤. រង់ចាំ ១-២ សប្តាហ៍ ហើយ Meta នឹងឆ្លើយ\n` +
       `៥. ប្រើ Khmer AI វិភាគស្ថានភាព Monetization របស់ Page (ទិញ Credit ១ ដង)\n\n` +
-      `💡 Tip: ផ្ទុកចំណូល reel/video ច្រើន ចំនួន watch time ត្រូវ 600,000+ minutes`;
+      `💡 Tip: ផ្ទុកចំណូល reel/video ច្រើន ចំនួន watch time ត្រូវ 600,000+ minutes;`;
   }
 
   if (p.match(/page restrict|restricted|page quality|ban|disable|blocked|ហ្វេសប៊ុក|ផេក|page|ถูกจำกัด|โดนแบน/)) {
     return `បាទ! ខ្ញុំជួយបញ្ហា Page Restricted 🔒\n\n` +
       `១. ចូល facebook.com/help/contact → ជ្រើស "Page Restricted"\n` +
       `២. Upload ID Card (ប័ណ្ណអត្តសញ្ញាណ) ប្រសិនបើ Meta ស្នើ\n` +
-      `៣. ពន្យល់ច្បាស់ថា Page របស់បងផ្ញើ content អ្វី\n` +
+      `៣. ពន្យល់ច្បាស់ថា Page របស់បងផ្ញើ content អ្វី\n`+
       `៤. រង់ចាំ ២-៥ ថ្ងៃ ហើយ Meta review\n` +
       `៥. ប្រើ Khmer AI Generate Appeal Letter ដែលជួយ ៩០% 🎯\n\n` +
       `⚠️ ហៅ Meta Support: 1-650-543-4800 (ប្រសិនបើ severe)`;
@@ -81,7 +81,7 @@ function getKeywordFallback(prompt) {
       `📦 កញ្ចប់តម្លៃ:\n` +
       `• Basic $9 → 1 Credit (វិភាគ 1 ដង)\n` +
       `• Standard $15 → 2 Credits\n` +
-      `• Pro $21 → 3 Credits ⭐\n` +
+      `• Pro $21 → 3 Credits ⭐️\n` +
       `• VIP $29 → 5 Credits\n` +
       `• Business $39 → 8 Credits\n` +
       `• Agency $59 → 15 Credits\n\n` +
@@ -89,10 +89,11 @@ function getKeywordFallback(prompt) {
       `១. ទូទាត់ → ទទួល Code (ដូចជា CLIENT-001)\n` +
       `២. វាយ Code នៅទំព័រ Access Code\n` +
       `៣. ចុច Submit → Credit ចូលភ្លាម\n` +
-      `៤. ប្រើ Credit វិភាគ Facebook Page/Profile`;
+      `៤.
+      ប្រើ Credit វិភាគ Facebook Page/Profile`;
   }
 
-  return `សួស្តីបង! 🤖 ខ្ញុំ AI ជំនួយការ Khmer AI។\n\n` +
+  return `សួស្តីបង! 🤖 ខ្ញុំ AI ជំនួយការ Khmer AI。\n\n` +
     `ខ្ញុំអាចជួយបង:\n` +
     `• 💰 បញ្ហា Monetization\n` +
     `• 🔒 Page Restricted / Banned\n` +
@@ -135,10 +136,9 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
-// 1. ปุ่ม Login สำหรับรับ Token (อิงตามระบบเก่าที่ส่งมา)
+// 1. ปุ่ม Login สำหรับรับ Token
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    // ตรงนี้บงสามารถเช็คกับ Database ได้ ในที่นี้ทำระบบออก Token ให้ผ่านชั่วคราว
     if (username === 'admin' && password === '1234') {
         const token = jwt.sign({ username }, SECRET, { expiresIn: '7d' });
         return res.json({ success: true, token });
@@ -146,14 +146,13 @@ app.post('/api/login', (req, res) => {
     res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
 });
 
-// 2. ปุ่ม AI Analyze ที่ยิงตรงไปหา พอร์ต 5000 ของบง (ไม่มี OpenAI แฝง)
+// 2. ปุ่ม AI Analyze
 app.post('/api/analyze', async (req, res) => {
     const { pageName, category, followers, selectedProblem, description } = req.body;
 
     const prompt = `Analyze Facebook Page issue: Name ${pageName}, Category ${category}, Followers ${followers}. Problem: ${selectedProblem}. Description: ${description}. Provide English and Khmer appeal message.`;
 
     try {
-        // ยิงตรงเข้าสมองกล Llama 3 พอร์ต 5000 ของบงทันที
         const aiResponse = await fetch('http://localhost:3000/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -162,22 +161,22 @@ app.post('/api/analyze', async (req, res) => {
                 message: prompt
             })
         });
-
         const aiData = await aiResponse.json();
         res.json({ 
             success: true, 
-            result: aiData.reply || aiData.message || aiData 
+            result: aiData.reply ||  aiData.message||  aiData 
         });
 
     } catch (error) {
         res.status(500).json({ success: false, error: "ติดต่อ AI Server พอร์ต 5000 ไม่ได้ครับ" });
     }
 });
+
 // Auto Payment Webhook
 app.post('/api/webhook/payment', (req, res) => {
   const { customerName, pageLink, packageName, amount, txId } = req.body;
 
-  if (!customerName ||  !pageLink ||  !packageName ||  !amount ||  !txId) {
+  if (!customerName || !pageLink || !packageName || !amount || !txId) {
     return res.status(400).json({
       success: false,
       message: 'Missing payment data'
@@ -199,7 +198,7 @@ app.post('/api/webhook/payment', (req, res) => {
 
   savePayment(paymentRecord);
 
-console.log('✅ Payment approved:', paymentRecord);
+  console.log('✅ Payment approved:', paymentRecord);
 
   res.json({
     success: true,
@@ -219,15 +218,13 @@ app.post('/api/verify-code', (req, res) => {
     });
   }
 
-  
   let payments = [];
 
   if (fs.existsSync(paymentsFile)) {
     payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
   }
 
- const user = payments.find(p => p.accessCode === accessCode && p.status === 'paid');
-
+  const user = payments.find(p => p.accessCode === accessCode && p.status === 'paid');
   if (!user) {
     return res.status(401).json({
       success: false,
@@ -236,15 +233,15 @@ app.post('/api/verify-code', (req, res) => {
   }
 
   res.json({
-  success: true,
-  message: 'Access granted',
-  user
+    success: true,
+    message: 'Access granted',
+    user
   });
 });
 
 const aiChatRouter = require("./aiChat.cjs");
 
-// === 1. API ROUTES (ต้องวางไว้ด้านบนทั้งหมด) ===
+// === 1. API ROUTES ===
 app.use("/api", aiChatRouter);
 
 app.get("/api-health", (req, res) => {
@@ -256,7 +253,6 @@ app.post('/api/facebook/login', async (req, res) => {
   const { accessToken } = req.body;
 
   try {
-    // 1. ดึงข้อมูลจาก Facebook Graph API
     const fbResponse = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,email&access_token=${accessToken}`);
     const fbData = await fbResponse.json();
 
@@ -264,7 +260,6 @@ app.post('/api/facebook/login', async (req, res) => {
       return res.status(400).json({ success: false, error: fbData.error.message });
     }
 
-    // 2. ส่งข้อมูลไปวิเคราะห์กับ AI (ใช้ Port เดียวกับ Server)
     const port = process.env.PORT || 5000;
     const aiResponse = await fetch(`http://localhost:${port}/api/analyze`, {
       method: 'POST',
@@ -288,7 +283,7 @@ app.post('/api/facebook/login', async (req, res) => {
   }
 });
 
-// === 2. SERVE FRONTEND (ต้องอยู่ใต้ API ทั้งหมด) ===
+// === 2. SERVE FRONTEND ===
 app.use(express.static(path.join(__dirname, '../dist')));
 
 app.get('*', (req, res) => {
